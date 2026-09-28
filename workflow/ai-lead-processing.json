@@ -1,0 +1,229 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "YOUR_SHEET_GID",
+          "mode": "id"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "fdeecbbb-a941-4c0f-b1a3-8d4d43caab43",
+      "name": "Google Sheets Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3830051f-f167-4b54-9b13-1fcd359a29d2",
+              "name": "Marca temporal",
+              "value": "={{ $json['Marca temporal'] }}",
+              "type": "string"
+            },
+            {
+              "id": "05d63e07-d01b-4db4-bd6b-b2a10ee4997f",
+              "name": "Nombre completo",
+              "value": "={{ $json['Nombre completo'] }}",
+              "type": "string"
+            },
+            {
+              "id": "d91e1302-ad40-4c0d-8aa7-550fa03c69f6",
+              "name": "Correo electrónico",
+              "value": "={{ $json['Correo electrónico'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a0a788f7-27ab-482d-9ffc-196d32af4031",
+              "name": "Empresa (opcional)",
+              "value": "={{ $json['Empresa (opcional)'] }}",
+              "type": "string"
+            },
+            {
+              "id": "57b7f1cd-562e-4391-ab23-fe1d9c04d04e",
+              "name": "¿Qué servicio te interesa?",
+              "value": "={{ $json['¿Qué servicio te interesa?'] }}",
+              "type": "string"
+            },
+            {
+              "id": "f55665cf-cc92-4802-8d71-840fd5e384a0",
+              "name": "  Describe tu necesidad o proyecto  ",
+              "value": "={{ $json['Describe tu necesidad o proyecto'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "f6f4b50b-d88c-4dc7-93c5-bcf5810c972e",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Analiza esta información:\n\nNombre:\n{{ $json[\"Nombre completo\"] }}\n\nServicio:\n{{ $json[\"¿Qué servicio te interesa?\"] }}\n\nNecesidad:\n{{ $json[\"  Describe tu necesidad o proyecto  \"] }}\n\nResponde únicamente con este JSON:\n\n{\n  \"resumen\": \"\",\n  \"prioridad\": \"\",\n  \"recomendacion\": \"\"\n}\n\nLa prioridad debe ser exactamente: Alta, Media o Baja.\n\nNo incluyas bloques Markdown ni ```json."
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "7e34cc3b-8e95-4ad5-8e4c-b3c48503d26f",
+      "name": "Message a model"
+    },
+    {
+      "parameters": {
+        "url": "https://api.callmebot.com/whatsapp.php",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "phone",
+              "value": "=YOUR_PHONE_NUMBER"
+            },
+            {
+              "name": "text",
+              "value": "=🚨 Nuevo Lead  \n\n👤 Nombre: {{ $('Edit Fields').item.json[\"Nombre completo\"] }}  \n📧 Correo: {{ $('Edit Fields').item.json[\"Correo electrónico\"] }}  \n🏢 Empresa: {{ $('Edit Fields').item.json[\"Empresa (opcional)\"] }}  \n🛠 Servicio: {{ $('Edit Fields').item.json[\"¿Qué servicio te interesa?\"] }}  ────────────────────  \n\n📌 Resumen: {{ $json.resumen }}  \n\n⭐ Prioridad: {{ $json.prioridad }}  \n\n💡 Recomendación: {{ $json.recomendacion }}"
+            },
+            {
+              "name": "apikey",
+              "value": "YOUR_CALLMEBOT_API_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1024,
+        0
+      ],
+      "id": "5b7a31e6-61d8-4267-b421-32d9b8d1d7e6",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "04a7bb4b-46da-4de0-b135-1058d74b06e5",
+              "name": "resumen",
+              "value": "={{ JSON.parse($json.output[0].content[0].text).resumen }}",
+              "type": "string"
+            },
+            {
+              "id": "d76a28d0-b8ac-46db-89b9-ffab45a675e9",
+              "name": "prioridad",
+              "value": "={{ JSON.parse($json.output[0].content[0].text).prioridad }}",
+              "type": "string"
+            },
+            {
+              "id": "0f372d42-d9d8-4520-bc13-e53aa023975f",
+              "name": "recomendacion",
+              "value": "={{ JSON.parse($json.output[0].content[0].text).recomendacion }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        0
+      ],
+      "id": "a97a476f-5b06-49d2-92ab-3edb2a4c04e1",
+      "name": "Parse Fields"
+    }
+  ],
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Parse Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}
